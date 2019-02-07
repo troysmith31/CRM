@@ -9,9 +9,8 @@ default:
   extensions:
     Novaway\CommonContexts\Extension: ~
     Behat\MinkExtension:
-      base_url: http://localhost
-      browser_name: Chrome
+      base_url: http://localhost/crm
       selenium2:
+        browser: chrome
         capabilities:
-          platform: Windows 10
-          version: 67.0
+          browserName: "chrome"
