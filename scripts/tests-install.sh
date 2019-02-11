@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cp ./travis-ci/behat.yml ./tests/behat/behat.yml # Overwrite the checked-in behat.yml with one that works with travis / saucelabs
+
 if [[ -z "${TRAVIS}" ]]; then
   echo "Not TravisCI - Manually Installing Sauce Connect"
   wget -q https://saucelabs.com/downloads/sc-4.4.6-linux.tar.gz -O /tmp/sc.tar.gz
