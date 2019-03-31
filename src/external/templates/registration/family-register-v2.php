@@ -37,6 +37,15 @@ require(SystemURLs::getDocumentRoot() . "/Include/HeaderNotLoggedIn.php");
 
         <div class="box-body">
             <form id="example-advanced-form" action="#">
+
+                <h3>Welcome</h3>
+                <fieldset>
+                    <div><?= SystemConfig::getValue("sSelfRegistrationTNC")?></div>
+
+                    <input id="acceptTerms-2" name="acceptTerms" type="checkbox" class="required"> <label
+                            for="acceptTerms-2"><?= gettext("I agree with the Terms and Conditions.")?></label>
+                </fieldset>
+
                 <h3>Family</h3>
                 <fieldset>
                     <div class="form-group has-feedback">

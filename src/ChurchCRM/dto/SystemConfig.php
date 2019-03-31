@@ -110,6 +110,7 @@ class SystemConfig
         "bForceUppercaseZip" => new ConfigItem(67, "bForceUppercaseZip", "boolean", "0", gettext("Make user-entered zip/postcodes UPPERCASE when saving to the database.")),
         "bEnableNonDeductible" => new ConfigItem(72, "bEnableNonDeductible", "boolean", "0", gettext("Enable non-deductible payments")),
         "bEnableSelfRegistration" => new ConfigItem(80, "bEnableSelfRegistration", "boolean", "0", gettext("Set true to enable family self registration.")),
+        "sSelfRegistrationTNC" => new ConfigItem(81, "sSelfRegistrationTNC", "text", "0", gettext("Welcome to our Church, but clicking I agree, you agree to our Terms and Conditions ")),
         "sPhoneFormat" => new ConfigItem(100, "sPhoneFormat", "text", "(999) 999-9999"),
         "sPhoneFormatWithExt" => new ConfigItem(101, "sPhoneFormatWithExt", "text", "(999) 999-9999 x99999"),
         "sPhoneFormatCell" => new ConfigItem(111, "sPhoneFormatCell", "text", "(999) 999-9999"),
