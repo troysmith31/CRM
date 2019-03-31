@@ -7,7 +7,18 @@ use ChurchCRM\dto\SystemURLs;
 $sPageTitle = gettext("Family Registration");
 require(SystemURLs::getDocumentRoot(). "/Include/HeaderNotLoggedIn.php");
 ?>
+  <style type="text/css">
 
+    .wizard .content {
+    min-height: 100px;
+}
+.wizard .content > .body {
+    width: 100%;
+    height: auto;
+    padding: 15px;
+    position: relative;
+}
+  </style>
   <div class="register-box" style="width: 600px;">
     <div class="register-logo">
       <?php
@@ -23,12 +34,10 @@ require(SystemURLs::getDocumentRoot(). "/Include/HeaderNotLoggedIn.php");
       <a href="<?= SystemURLs::getRootPath() ?>/"><?= $headerHTML ?></a>
     </div>
 
-    <div class="register-box-body">
+    <div class="box-body">
         <form id="example-advanced-form" action="#">
             <h3>Family</h3>
             <fieldset>
-                <legend>Account Information</legend>
-
                 <div class="form-group has-feedback">
                     <input name="familyName" type="text" class="form-control" placeholder="<?= gettext('Family Name') ?>" required>
                     <span class="fa fa-user form-control-feedback"></span>
@@ -94,39 +103,122 @@ require(SystemURLs::getDocumentRoot(). "/Include/HeaderNotLoggedIn.php");
                         </label>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <button type="submit" class="btn bg-olive"><?= gettext('Next'); ?></button>
-                    </div>
-                    <!-- /.col -->
-                </div>
             </fieldset>
 
-            <h3>Profile</h3>
+            <h3>Members</h3>
             <fieldset>
-                <legend>Profile Information</legend>
+                  <?php for ($x = 1; $x <= 4; $x++) { ?>
+              <div class="box">
+                <div class="box-header with-border">
+                  <h4 class="box-title">
+                    <?= gettext ("Family Member") . " #". $x ?>
+                  </h4>
+                </div>
+                <div class="box-body">
+                  <div class="form-group has-feedback">
+                    <div class="row">
+                      <div class="col-lg-8">
+                        <select name="memberRole-<?= $x ?>" class="form-control">
+                          <?php
+                          switch ($x) {
+                              case 1:
+                                  $defaultRole = SystemConfig::getValue('sDirRoleHead');
+                                  break;
+                              case 2:
+                                  $defaultRole = SystemConfig::getValue('sDirRoleSpouse');
+                                  break;
+                              default:
+                                  $defaultRole = SystemConfig::getValue('sDirRoleChild');
+                                  break;
+                          }
 
-                <label for="name-2">First name *</label>
-                <input id="name-2" name="name" type="text" class="required">
-                <label for="surname-2">Last name *</label>
-                <input id="surname-2" name="surname" type="text" class="required">
-                <label for="email-2">Email *</label>
-                <input id="email-2" name="email" type="text" class="required email">
-                <label for="address-2">Address</label>
-                <input id="address-2" name="address" type="text">
-                <label for="age-2">Age (The warning step will show up if age is less than 18) *</label>
-                <input id="age-2" name="age" type="text" class="required number">
-                <p>(*) Mandatory</p>
+                          foreach ($familyRoles as $role) { ?>
+                            <option value="<?= $role->getOptionId() ?>" <?php if ( $role->getOptionId() == $defaultRole) { echo "selected"; } ?>><?= $role->getOptionName() ?></option>
+                          <?php } ?>
+                        </select>
+                      </div>
+                      <div class="col-lg-4">
+                        <select name="memberGender-<?= $x ?>" class="form-control">
+                          <option value="1"><?= gettext('Male') ?></option>
+                          <option value="2"><?= gettext('Female') ?></option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group has-feedback">
+                    <div class="row">
+                      <div class="col-lg-6">
+                        <input name="memberFirstName-<?= $x ?>" class="form-control" maxlength="50"
+                               placeholder="<?= gettext('First Name') ?>" required>
+                      </div>
+                      <div class="col-lg-6">
+                        <input name="memberLastName-<?= $x ?>" class="form-control" value="" maxlength="50"
+                               placeholder="<?= gettext('Last Name') ?>" required>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group has-feedback">
+                    <div class="input-group">
+                      <div class="input-group-addon">
+                        <i class="fa fa-envelope"></i>
+                      </div>
+                      <input name="memberEmail-<?= $x ?>" class="form-control" maxlength="50"
+                             placeholder="<?= gettext('Email') ?>">
+                    </div>
+                  </div>
+                  <div class="form-group has-feedback">
+                    <div class="row">
+                      <div class="col-lg-4">
+                        <div class="input-group">
+                          <div class="input-group-addon">
+                            <i class="fa fa-phone"></i>
+                          </div>
+                          <select name="memberPhoneType-<?= $x ?>" class="form-control">
+                            <option value="mobile"><?= gettext('Mobile') ?></option>
+                            <option value="home"><?= gettext('Home') ?></option>
+                            <option value="work"><?= gettext('Work') ?></option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="col-lg-8">
+                        <div class="input-group">
+                          <input name="memberPhone-<?= $x ?>" class="form-control" maxlength="30" data-inputmask='"mask": "<?= SystemConfig::getValue('sPhoneFormat')?>"' data-mask
+                                 placeholder="<?= gettext('Phone') ?>">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group has-feedback">
+                    <div class="row">
+                      <div class="col-lg-6">
+                        <div class="input-group">
+                          <div class="input-group-addon">
+                            <i class="fa fa-birthday-cake"></i>
+                          </div>
+                          <input type="text" class="form-control inputDatePicker" name="memberBirthday-<?= $x ?>">
+                        </div>
+                      </div>
+                      <div class="col-lg-6">
+                          <label>
+                            <input type="checkbox" name="memberHideAge-<?= $x ?>">&nbsp; <?= gettext('Hide Age') ?>
+                          </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <?php
+} ?>
             </fieldset>
 
-            <h3>Warning</h3>
+            <h3>Confirm</h3>
             <fieldset>
                 <legend>You are to young</legend>
 
                 <p>Please go away ;-)</p>
             </fieldset>
 
-            <h3>Finish</h3>
+            <h3>Complete</h3>
             <fieldset>
                 <legend>Terms and Conditions</legend>
 
@@ -197,7 +289,11 @@ require(SystemURLs::getDocumentRoot(). "/Include/HeaderNotLoggedIn.php");
                 }
             });
         });
+
+
     </script>
+
+
 
     <script src="<?= SystemURLs::getRootPath() ?>/skin/external/jquery.steps/jquery.steps.min.js"></script>
     <script src="<?= SystemURLs::getRootPath() ?>/skin/external/jquery-validation/jquery.validate.min.js"></script>
