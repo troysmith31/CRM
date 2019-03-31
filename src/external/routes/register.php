@@ -15,7 +15,7 @@ $app->group('/register', function () {
         $this->get('/', function ($request, $response, $args) {
             $renderer = new PhpRenderer('templates/registration/');
 
-            return $renderer->render($response, 'family-register.php', ['sRootPath' => SystemURLs::getRootPath()]);
+            return $renderer->render($response, 'family-register-v2.php', ['sRootPath' => SystemURLs::getRootPath()]);
         });
 
         $this->post('/', function ($request, $response, $args) {
