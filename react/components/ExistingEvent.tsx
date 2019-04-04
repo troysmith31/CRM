@@ -28,6 +28,12 @@ class ExistingEvent extends React.Component<EventFormProps, EventFormState> {
           PinnedCalendars: []
         }
       }
+      if (this.props.start) {
+        this.state.event.Start = this.props.start;
+      }
+      if (this.props.end) {
+        this.state.event.End = this.props.end;
+      }
     }
        
 
@@ -93,7 +99,6 @@ class ExistingEvent extends React.Component<EventFormProps, EventFormState> {
     this.setState({
       event: Object.assign({}, this.state.event, { [name]: value })
     });
-    console.log(this.state);
   }
 
   handleStartDateChange(date: Date) {
@@ -101,7 +106,6 @@ class ExistingEvent extends React.Component<EventFormProps, EventFormState> {
     this.setState({
       event: newEventState
     })
-    console.log(this.state);
   }
 
   handleEndDateChange(date: Date) {
@@ -109,25 +113,20 @@ class ExistingEvent extends React.Component<EventFormProps, EventFormState> {
     this.setState({
       event: newEventState
     })
-    console.log(this.state);
   }
 
   updatePinnedCalendar(event) {
     const pinnedCalendars=event.map((selected:{value:number, label:string}) => selected.value);
-    console.log(pinnedCalendars);
     this.setState({
       event: Object.assign({}, this.state.event, { PinnedCalendars: pinnedCalendars })
     });
-    console.log(this.state.event);
   }
 
   updateEventType(event) {
     const eventType=event.value;
-    console.log(eventType);
     this.setState({
       event: Object.assign({}, this.state.event, { Type: eventType })
     });
-    console.log(this.state.event);
   }
 
   exit() {
@@ -188,7 +187,7 @@ class ExistingEvent extends React.Component<EventFormProps, EventFormState> {
       return ( <div>
     <Modal show={true} onHide={function () { }} >
       <Modal.Header>
-      <input name="Title" value={this.state.event.Title} onChange={this.handleInputChange} />
+      <input name="Title" value={this.state.event.Title} onChange={this.handleInputChange} placeholder={window.i18next.t("Event Title")}/>
       </Modal.Header>
       <Modal.Body>
         <EventPropertiesEditor event={this.state.event} calendars={this.state.calendars} eventTypes={this.state.eventTypes} changeHandler={this.handleInputChange} handleStartDateChange={this.handleStartDateChange}  handleEndDateChange={this.handleEndDateChange} pinnedCalendarChanged={this.updatePinnedCalendar} eventTypeChanged={this.updateEventType} />
@@ -226,6 +225,8 @@ class ExistingEvent extends React.Component<EventFormProps, EventFormState> {
 interface EventFormProps {
   eventId: Number;
   onClose: Function;
+  start?: Date;
+  end?: Date;
 }
 
 interface EventFormState {
