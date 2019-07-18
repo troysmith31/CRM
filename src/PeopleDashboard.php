@@ -3,22 +3,22 @@
  * User: George Dawoud
  * Date: 1/17/2016
  * Time: 8:01 AM.
+ * 
+ * Updated by Troy Smith, 2019-07-13
  */
 require 'Include/Config.php';
 require 'Include/Functions.php';
-
 use ChurchCRM\dto\SystemConfig;
 use ChurchCRM\Service\DashboardService;
 use ChurchCRM\dto\SystemURLs;
 use ChurchCRM\PersonQuery;
 use ChurchCRM\ListOptionQuery;
 use ChurchCRM\SessionUser;
-
+use ChurchCRM\GenderTypeQuery;
+use Propel\Runtime\Propel;
 // Set the page title
 $sPageTitle = gettext('People Dashboard');
-
 require 'Include/Header.php';
-
 $dashboardService = new DashboardService();
 $personCount = $dashboardService->getPersonCount();
 $personStats = $dashboardService->getPersonStats();
@@ -26,55 +26,39 @@ $familyCount = $dashboardService->getFamilyCount();
 $groupStats = $dashboardService->getGroupStats();
 $ageStats = $dashboardService->getAgeStats();
 $demographicStats = ListOptionQuery::create()->filterByID('2')->find();
-
-$sSQL = 'select count(*) as numb, per_Gender from person_per, family_fam
-        where fam_ID =per_fam_ID and fam_DateDeactivated is  null
-        and per_Gender in (1,2) and
-        per_fmr_ID not in (' . SystemConfig::getValue('sDirRoleChild') . ')
-        group by per_Gender ;';
-$rsAdultsGender = RunQuery($sSQL);
-
-$sSQL = 'select count(*) as numb, per_Gender from person_per , family_fam
-          where fam_ID =per_fam_ID and fam_DateDeactivated is  null
-          and per_Gender in (1,2)
-          and per_fmr_ID in (' . SystemConfig::getValue('sDirRoleChild') . ')
-          group by per_Gender ;';
-$rsKidsGender = RunQuery($sSQL);
-
-$sSQL = 'select lst_OptionID,lst_OptionName from list_lst where lst_ID = 1;';
-$rsClassification = RunQuery($sSQL);
-$classifications = new stdClass();
-while (list($lst_OptionID, $lst_OptionName) = mysqli_fetch_row($rsClassification)) {
-    $classifications->$lst_OptionName = $lst_OptionID;
+$classList = ListOptionQuery::create()->filterByID(1)->find();
+foreach ($classList as $list) {
+  $classifications[$list->getOptionName()] = $list->getOptionID();
 }
-
 $sSQL = "SELECT per_Email, fam_Email, lst_OptionName as virt_RoleName FROM person_per
           LEFT JOIN family_fam ON per_fam_ID = family_fam.fam_ID
           INNER JOIN list_lst on lst_ID=1 AND per_cls_ID = lst_OptionID
-          WHERE fam_DateDeactivated is  null
+          WHERE family_fam.fam_DateDeactivated is null
 			 AND per_ID NOT IN
           (SELECT per_ID
               FROM person_per
               INNER JOIN record2property_r2p ON r2p_record_ID = per_ID
               INNER JOIN property_pro ON r2p_pro_ID = pro_ID AND pro_Name = 'Do Not Email')";
-
-$rsEmailList = RunQuery($sSQL);
+$conn = Propel::getConnection(); 
+$stmt = $conn->prepare($sSQL);
+$stmt->execute();
+$rsEmailList = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 $sEmailLink = '';
 $sMailtoDelimiter = SessionUser::getUser()->getUserConfigString("sMailtoDelimiter");
 $roleEmails = array();
-while (list($per_Email, $fam_Email, $virt_RoleName) = mysqli_fetch_row($rsEmailList)) {
-    $sEmail = SelectWhichInfo($per_Email, $fam_Email, false);
-    if ($sEmail) {
-        if (!stristr($sEmailLink, $sEmail)) {
-            $sEmailLink .= $sEmail .= $sMailtoDelimiter;
-            if (!array_key_exists($virt_RoleName, $roleEmails)) {
-                $roleEmails[$virt_RoleName] ="";
-            }
-            $roleEmails[$virt_RoleName] .= $sEmail;
+foreach($rsEmailList as $email) {
+  $sEmail = SelectWhichInfo($email['per_Email'], $email['fam_Email'], false);
+ 
+  if ($sEmail) {
+    if (!stristr($sEmailLink, $sEmail)) {
+        $sEmailLink .= $sEmail .= $sMailtoDelimiter;
+        if (!array_key_exists($email['virt_RoleName'], $roleEmails)) {
+            $roleEmails[$email['virt_RoleName']] = "";
         }
+        $roleEmails[$email['virt_RoleName']] .= $sEmail;
     }
+  }
 }
-
 ?>
 
 <!-- Default box -->
@@ -166,7 +150,7 @@ while (list($per_Email, $fam_Email, $virt_RoleName) = mysqli_fetch_row($rsEmailL
       <div class="icon">
         <i class="fa fa-user"></i>
       </div>
-      <a href="<?= SystemURLs::getRootPath() ?>/v2/people" class="small-box-footer">
+      <a href="<?= SystemURLs::getRootPath() ?>/SelectList.php?mode=person" class="small-box-footer">
         <?= gettext('See All People') ?> <i class="fa fa-arrow-circle-right"></i>
       </a>
     </div>
@@ -284,7 +268,7 @@ while (list($per_Email, $fam_Email, $virt_RoleName) = mysqli_fetch_row($rsEmailL
         <?php foreach ($personStats as $key => $value) {
             ?>
           <tr>
-            <td><a href='v2/people?Classification=<?= $classifications->$key ?>'><?= gettext($key) ?></a></td>
+            <td><a href='SelectList.php?Sort=name&Filter=&mode=person&Classification=<?= $classifications[$key] ?>'><?= gettext($key) ?></a></td> 
             <td>
               <div class="progress progress-xs progress-striped active">
                 <div class="progress-bar progress-bar-success"
@@ -321,98 +305,50 @@ while (list($per_Email, $fam_Email, $virt_RoleName) = mysqli_fetch_row($rsEmailL
             <th>% <?= gettext('of People') ?></th>
             <th style="width: 40px"><?= gettext('Count') ?></th>
           </tr>
-            <?php foreach ($demographicStats as $demStat) {
-            $countMale = PersonQuery::create()->filterByFmrId($demStat->getOptionID())->filterByGender(1)->count();
-            $countFemale = PersonQuery::create()->filterByFmrId($demStat->getOptionID())->filterByGender(2)->count();
-            $countUnknown = PersonQuery::create()->filterByFmrId($demStat->getOptionID())->filterByGender(0)->count();
-            $demStatId = $demStat->getOptionID();
-            $demStatName = $demStat->getOptionName();
-            $genPop = PersonQuery::create()->count();
-            if ($countMale != 0) {
-                ?>
-<tr>
-<td><a href="v2/people?Gender=1&FamilyRole=<?= $demStatId ?>"><?= $demStatName ?> - <?= gettext('Male') ?></a></td>
-<td>
-<div class="progress progress-xs progress-striped active">
-<div class="progress-bar progress-bar-success" style="width: <?= round(($countMale / $genPop) * 100)?>%" title="<?= round(($countMale / $genPop) * 100)?>%"></div>
-</div>
-</td>
-<td><span class="badge bg-green"><?= $countMale ?></span></td>
-</tr>
-<?php
+            <?php 
+              $genderlist = GenderTypeQuery::create()->find();
+              $genPop = PersonQuery::create()->leftJoinFamily()->where("family_fam.fam_DateDeactivated is NULL")->count();
+              foreach ($demographicStats as $demStat) {
+                unset($countGender);
+                foreach ($genderlist as $gender) {
+                  // GenderName, Count, GenderID, demStatId, demStatName 
+                  $countGender[] = [$gender->getName(), PersonQuery::create()->leftJoinFamily()->where("family_fam.fam_DateDeactivated is NULL")->filterByFmrId($demStat->getOptionID())->filterByGender($gender->getId())->count(), $gender->getId(), $demStat->getOptionID(), $demStat->getOptionName()];
+                }
+  
+                foreach($countGender as $row) {
+                  if ($row[1] != "0") {
+                    echo "<tr>";
+                    echo "<td><a href='SelectList.php?mode=person&Gender=" . $row[2] . "&FamilyRole=" . $row[3] . "'>" . $row[4] . " - " . gettext($row[0]) . "</a></td>";
+                    echo "<td>";
+                    echo "<div class='progress progress-xs progress-striped active'>";
+                    echo "<div class='progress-bar progress-bar-success' style='width:" . round(($row[1] / $genPop) * 100) . "%' title=" . round(($row[1]  / $genPop) * 100) . "%></div>";
+                    echo "</div>";
+                    echo "</td>";
+                    echo "<td><span class='badge bg-green'>" . $row[1] . "</span></td>";
+                    echo "</tr>";
+                  } 
+                }
             }
-            if ($countFemale != 0) {
+              // find Unknown family role
+              unset($countGender);
+              foreach ($genderlist as $gender) {
+                // GenderName, Count, GenderID, demStatId, demStatName 
+                $countGender[] = [$gender->getName(), PersonQuery::create()->leftJoinFamily()->where("family_fam.fam_DateDeactivated is NULL")->filterByFmrId("0")->filterByGender($gender->getId())->count(), $gender->getId(), 0, "Unknown"];
+              }
+              foreach($countGender as $row) {
+                if ($row[1] != "0") {
+                  echo "<tr>";
+                  echo "<td><a href='SelectList.php?mode=person&Gender=" . $row[2] . "&FamilyRole=" . $row[3] . "'>" . $row[4] . " - " . gettext($row[0]) . "</a></td>";
+                  echo "<td>";
+                  echo "<div class='progress progress-xs progress-striped active'>";
+                  echo "<div class='progress-bar progress-bar-success' style='width:" . round(($row[1] / $genPop) * 100) . "%' title=" . round(($row[1]  / $genPop) * 100) . "%></div>";
+                  echo "</div>";
+                  echo "</td>";
+                  echo "<td><span class='badge bg-green'>" . $row[1] . "</span></td>";
+                  echo "</tr>";
+                } 
+              }
                 ?>
-<tr>
-<td><a href="v2/people?Gender=2&FamilyRole=<?= $demStatId ?>"><?= $demStatName ?> - <?= gettext('Female') ?></a></td>
-<td>
-<div class="progress progress-xs progress-striped active">
-<div class="progress-bar progress-bar-success" style="width: <?= round(($countFemale / $genPop) * 100)?>%" title="<?= round(($countFemale / $genPop) * 100)?>%"></div>
-</div>
-</td>
-<td><span class="badge bg-green"><?= $countFemale ?></span></td>
-</tr>
-<?php
-            }
-            if ($countUnknown != 0) {
-                ?>
-<tr>
-<td><a href="v2/people?Gender=0&FamilyRole=<?= $demStatId ?>"><?= $demStatName ?> - <?= gettext('Unknown') ?></a></td>
-<td>
-<div class="progress progress-xs progress-striped active">
-<div class="progress-bar progress-bar-success" style="width: <?= round(($countUnknown / $genPop) * 100)?>%" title="<?= round(($countUnknown / $genPop) * 100)?>%"></div>
-</div>
-</td>
-<td><span class="badge bg-green"><?= $countUnknown ?></span></td>
-</tr>
-              <?php
-            }
-        }
-            $countUnknownMale = PersonQuery::create()->filterByFmrId(0)->filterByGender(1)->count();
-            $countUnknownFemale = PersonQuery::create()->filterByFmrId(0)->filterByGender(2)->count();
-            $countUnknwonRoleUnknownGender = PersonQuery::create()->filterByFmrId(0)->filterByGender(0)->count();
-
-            $genPop = PersonQuery::create()->count();
-            if ($countUnknownMale != 0) {
-                ?>
-<tr>
-<td><a href="v2/people?Gender=1&FamilyRole=0"><?= gettext('Unknown') ?> - <?= gettext('Male') ?></a></td>
-<td>
-<div class="progress progress-xs progress-striped active">
-<div class="progress-bar progress-bar-success" style="width: <?= round(($countUnknownMale / $genPop) * 100)?>%" title="<?= round(($countUnknownMale / $genPop) * 100)?>%"></div>
-</div>
-</td>
-<td><span class="badge bg-green"><?= $countUnknownMale ?></span></td>
-</tr>
-              <?php
-            }
-            if ($countUnknownFemale != 0) {
-                ?>
-<tr>
-<td><a href="v2/people?Gender=2&FamilyRole=0"><?= gettext('Unknown') ?> - <?= gettext('Female') ?></a></td>
-<td>
-<div class="progress progress-xs progress-striped active">
-<div class="progress-bar progress-bar-success" style="width: <?= round(($countUnknownFemale / $genPop) * 100)?>%" title="<?= round(($countUnknownFemale / $genPop) * 100)?>%"></div>
-</div>
-</td>
-<td><span class="badge bg-green"><?= $countUnknownFemale ?></span></td>
-</tr>
-<?php
-            }
-            if ($countUnknwonRoleUnknownGender != 0) {
-                ?>
-<tr>
-<td><a href="v2/people?Gender=0&FamilyRole=0"><?= gettext('Unknown') ?> - <?= gettext('Unknown') ?></a></td>
-<td>
-<div class="progress progress-xs progress-striped active">
-<div class="progress-bar progress-bar-success" style="width: <?= round(($countUnknwonRoleUnknownGender / $genPop) * 100)?>%" title="<?= round(($countUnknwonRoleUnknownGender / $genPop) * 100)?>%"></div>
-</div>
-</td>
-<td><span class="badge bg-green"><?= $countUnknwonRoleUnknownGender ?></span></td>
-</tr>
-<?php
-            }
-              ?>
         </table>
       </div>
     </div>
@@ -459,29 +395,38 @@ while (list($per_Email, $fam_Email, $virt_RoleName) = mysqli_fetch_row($rsEmailL
         //-------------
         // Get context with jQuery - using jQuery's .get() method.
         var PieData = [
-            <?php while ($row = mysqli_fetch_array($rsAdultsGender)) {
-                  if ($row['per_Gender'] == 1) {
-                      echo '{value: ' . $row['numb'] . ' , color: "#003399", highlight: "#3366ff", label: "' . gettext('Men') . '" },';
-                  }
-                  if ($row['per_Gender'] == 2) {
-                      echo '{value: ' . $row['numb'] . ' , color: "#9900ff", highlight: "#ff66cc", label: "' . gettext('Women') . '"},';
-                  }
+            <?php
+            $RoleChild = SystemConfig::getValue('sDirRoleChild');
+              // get list of children
+              $personList = PersonQuery::create()->leftJoinFamily()->where("family_fam.fam_DateDeactivated is NULL")
+                ->withColumn("COUNT(per_ID)", "Numb")
+                ->filterByFmrId($RoleChild)
+                ->groupByGender()
+                ->groupByFmrId()
+                ->orderByGender()
+                ->orderByFmrId()
+                ->find();
+              
+              foreach($personList as $person) {
+                echo "{value: " . $person->getNumb() . ", label: 'Child - " . gettext($person->getGenderName()) . "' },";
               }
-            while ($row = mysqli_fetch_array($rsKidsGender)) {
-                if ($row['per_Gender'] == 1) {
-                    echo '{value: ' . $row['numb'] . ' , color: "#3399ff", highlight: "#99ccff", label: "' . gettext('Boys') . '"},';
-                }
-                if ($row['per_Gender'] == 2) {
-                    echo '{value: ' . $row['numb'] . ' , color: "#009933", highlight: "#99cc00", label: "' . gettext('Girls') . '",}';
-                }
-            }
+              // get list of adults
+              $personList = PersonQuery::create()->leftJoinFamily()->where("family_fam.fam_DateDeactivated is NULL")
+                ->withColumn("COUNT(per_ID)", "Numb")
+                ->filterByFmrId(!$RoleChild)
+                ->groupByGender()
+                ->groupByFmrId()
+                ->orderByGender()
+                ->orderByFmrId()
+                ->find();
+              foreach($personList as $person) {
+                echo "{value: " . $person->getNumb() . ", label: 'Adult - " . gettext($person->getGenderName()) . "' },";
+              }
             ?>
         ];
         var pieOptions = {
-
             //String - Point label font colour
             pointLabelFontColor: "#666",
-
             //Boolean - Whether we should show a stroke on each segment
             segmentShowStroke: true,
             //String - The colour of each segment stroke
@@ -497,20 +442,15 @@ while (list($per_Email, $fam_Email, $virt_RoleName) = mysqli_fetch_row($rsEmailL
             // Boolean - whether to maintain the starting aspect ratio or not when responsive, if set to false, will take up entire container
             maintainAspectRatio: true,
             //String - A legend template
-            legendTemplate: "<% for (var i=0; i<segments.length; i++){%><span style=\"color: white;padding-right: 4px;padding-left: 2px;background-color:<%=segments[i].fillColor%>\"><%if(segments[i].label){%><%=segments[i].label%><%}%></span> <%}%></ul>"
+            legendTemplate: "<% for (var i=0; i<segments.length; i++){%><div style=\"color: white;padding-right: 4px;padding-left: 2px;background-color:<%=segments[i].fillColor%>\"><%if(segments[i].label){%><%=segments[i].label%><%}%></div> <%}%></ul>"
         };
-
         var pieChartCanvas = $("#gender-donut").get(0).getContext("2d");
         var pieChart = new Chart(pieChartCanvas);
-
-
         //Create pie or douhnut chart
         // You can switch between pie and douhnut using the method below.
         pieChart = pieChart.Doughnut(PieData, pieOptions);
-
         //then you just need to generate the legend
         var legend = pieChart.generateLegend();
-
         //and append it to your page somewhere
         $('#gender-donut-legend').append(legend);
         var ageLabels = <?php

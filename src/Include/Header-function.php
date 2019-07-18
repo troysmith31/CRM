@@ -106,6 +106,7 @@ function Header_body_scripts()
                 }
             },
             PageName:"<?= $_SERVER['PHP_SELF']?>"
+            
         };
     </script>
     <script src="<?= SystemURLs::getRootPath() ?>/skin/js/CRMJSOM.js"></script>

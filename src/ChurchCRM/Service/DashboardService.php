@@ -1,5 +1,7 @@
 <?php
-
+/*
+ Updated by Troy Smith, 2019-07-13
+*/
 namespace ChurchCRM\Service;
 
 use ChurchCRM\FamilyQuery;
@@ -30,10 +32,8 @@ class DashboardService
             ->filterByDateDeactivated()
             ->count();
         $data = ['familyCount' => $familyCount];
-
         return $data;
     }
-
     public function getPersonCount()
     {
         $personCount = PersonQuery::Create('per')
@@ -42,10 +42,8 @@ class DashboardService
             ->endUse()
             ->count();
         $data = ['personCount' => $personCount];
-
         return $data;
     }
-
     public function getPersonStats()
     {
         $data = [];
@@ -58,7 +56,6 @@ class DashboardService
         while ($row = mysqli_fetch_array($rsClassification)) {
             $data[$row['Classification']] = $row['count'];
         }
-
         return $data;
     }
     public function getGroupStats()
@@ -70,17 +67,15 @@ class DashboardService
           INNER JOIN person2group2role_p2g2r ON p2g2r_per_ID = per_ID
           INNER JOIN group_grp ON grp_ID = p2g2r_grp_ID
           LEFT JOIN family_fam ON fam_ID = per_fam_ID
-          where fam_DateDeactivated is  null and
+          where family_fam.fam_DateDeactivated is null and
 	            p2g2r_rle_ID = 2 and grp_Type = 4) as SundaySchoolKidsCount
         from dual ;
         ';
         $rsQuickStat = RunQuery($sSQL);
         $row = mysqli_fetch_array($rsQuickStat);
         $data = ['groups' => $row['Groups'], 'sundaySchoolClasses' => $row['SundaySchoolClasses'], 'sundaySchoolkids' => $row['SundaySchoolKidsCount']];
-
         return $data;
     }
-
     /**
      * Return last edited members. Only from active families selected
      * @param int $limit
@@ -95,7 +90,6 @@ class DashboardService
             ->limit($limit)
             ->find();
     }
-
     /**
      * Newly added members. Only from Active families selected
      * @param int $limit

@@ -12,6 +12,7 @@ class PersonDashboardItem implements DashboardItemInterface {
 
   public static function getDashboardItemValue() {
      $personCount = PersonQuery::Create('per')
+            ->filterByTypeOfMbr(3)
             ->useFamilyQuery('fam','left join')
                 ->filterByDateDeactivated(null)
             ->endUse()
@@ -28,6 +29,7 @@ class PersonDashboardItem implements DashboardItemInterface {
     public static function getUpdatedMembers($limit = 12)
     {
         return PersonQuery::create()
+            ->filterByTypeOfMbr(3)
             ->leftJoinWithFamily()
             ->where('Family.DateDeactivated is null')
             ->orderByDateLastEdited('DESC')
@@ -43,6 +45,7 @@ class PersonDashboardItem implements DashboardItemInterface {
     public static function getLatestMembers($limit = 12)
     {
         return PersonQuery::create()
+            ->filterByTypeOfMbr(3)
             ->leftJoinWithFamily()
             ->where('Family.DateDeactivated is null')
             ->filterByDateLastEdited(null)

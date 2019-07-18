@@ -52,7 +52,7 @@ $Anniversaries = MenuEventsCount::getAnniversaries();
 $peopleWithBirthDaysCount = MenuEventsCount::getNumberBirthDates();
 $AnniversariesCount = MenuEventsCount::getNumberAnniversaries();
 
-
+// echo "<script>alert('testing');</script>";
 if ($showBanner && ($peopleWithBirthDaysCount > 0 || $AnniversariesCount > 0)) {
     ?>
     <div class="alert alert-info alert-dismissible bg-purple disabled color-palette" id="Menu_Banner">
@@ -481,3 +481,7 @@ if ($depositData) { // If the user has Finance permissions, then let's display t
 <?php
 require 'Include/Footer.php';
 ?>
+
+<!-- <script nonce="< ?= SystemURLs::getCSPNonce() ?>">
+    alert(window.CRM.dashboard.renderers.FamilyCount);
+</script> -->

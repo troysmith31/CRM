@@ -635,6 +635,7 @@
         }).done(function (data) {
           for (var key in data) {
             window["CRM"]["dashboard"]["renderers"][key](data[key]);
+            //console.log(data);
           }
         });
       }

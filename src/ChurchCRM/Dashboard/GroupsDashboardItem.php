@@ -3,6 +3,8 @@
 namespace ChurchCRM\Dashboard;
 
 use ChurchCRM\Dashboard\DashboardItemInterface;
+use Propel\Runtime\Propel;
+use ChurchCRM\Utils\LoggerUtils;
 
 class GroupsDashboardItem implements DashboardItemInterface {
 
@@ -18,13 +20,18 @@ class GroupsDashboardItem implements DashboardItemInterface {
           INNER JOIN person2group2role_p2g2r ON p2g2r_per_ID = per_ID
           INNER JOIN group_grp ON grp_ID = p2g2r_grp_ID
           LEFT JOIN family_fam ON fam_ID = per_fam_ID
-          where fam_DateDeactivated is  null and
+          where family_fam.fam_DateDeactivated is null and
 	            p2g2r_rle_ID = 2 and grp_Type = 4) as SundaySchoolKidsCount
         from dual ;
         ';
-        $rsQuickStat = RunQuery($sSQL);
-        $row = mysqli_fetch_array($rsQuickStat);
-        $data = ['groups' => $row['Groups'] - $row['SundaySchoolClasses'], 'sundaySchoolClasses' => $row['SundaySchoolClasses'], 'sundaySchoolkids' => $row['SundaySchoolKidsCount']];
+        $conn = Propel::getConnection(); 
+        $stmt = $conn->prepare($sSQL);
+        $stmt->execute();
+        $rsQuickStat = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($rsQuickStat as $row) {
+          $data = ['groups' => $row['Groups'] - $row['SundaySchoolClasses'], 'sundaySchoolClasses' => $row['SundaySchoolClasses'], 'sundaySchoolkids' => $row['SundaySchoolKidsCount']];
+        }
 
         return $data;
   }

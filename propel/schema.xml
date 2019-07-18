@@ -60,11 +60,32 @@
         <column name="per_FacebookID" phpName="FacebookID" type="bigint" size="20" Description="FacebookID" />
         <column name="per_Twitter" phpName="Twitter" type="VARCHAR" size="50" Description="Twitter username" />
         <column name="per_LinkedIn" phpName="LinkedIn" type="VARCHAR" size="50" Description="LinkedIn name" />
+
+        <column name="fam_Name" phpName="Name" type="VARCHAR" size="50"/>
+        <column name="fam_WeddingDate" phpName="Weddingdate" type="DATE"/>
+        <column name="fam_scanCheck" phpName="ScanCheck" type="LONGVARCHAR"/>
+        <column name="fam_scanCredit" phpName="ScanCredit" type="LONGVARCHAR"/>
+        <column name="fam_SendNewsLetter" phpName="SendNewsletter" type="CHAR" sqlType="enum('FALSE','TRUE')"
+                required="true" defaultValue="FALSE"/>
+        <column name="fam_DateDeactivated" phpName="DateDeactivated" type="DATE"/>
+        <column name="fam_OkToCanvass" phpName="OkToCanvass" type="CHAR" sqlType="enum('FALSE','TRUE')" required="true"
+                defaultValue="FALSE"/>
+        <column name="fam_Canvasser" phpName="Canvasser" type="SMALLINT" size="5" sqlType="smallint(5) unsigned"
+                required="true" defaultValue="0"/>
+        <column name="fam_Latitude" phpName="Latitude" type="DOUBLE"/>
+        <column name="fam_Longitude" phpName="Longitude" type="DOUBLE"/>
+        <column name="typeofmbr" phpName="TypeOfMbr" type="TINYINT" size="3" sqlType="tinyint(3) unsigned" required="true"
+                defaultValue="0"/>
+        <column name="oldid" phpName="OldId" type="SMALLINT" size="9" sqlType="mediumint(9) unsigned"/>
+
         <index name="per_ID">
             <index-column name="per_ID"/>
         </index>
         <foreign-key foreignTable="family_fam">
             <reference local="per_fam_ID" foreign="fam_ID"/>
+        </foreign-key>
+        <foreign-key foreignTable="gender_gen">
+            <reference local="per_Gender" foreign="gen_ID"/>
         </foreign-key>
         <vendor type="mysql">
             <parameter name="Engine" value="InnoDB"/>
@@ -891,7 +912,25 @@
           <parameter name="Engine" value="InnoDB"/>
       </vendor>
     </table>
+    <table name="gender_gen" idMethod="native" phpName="GenderType" description="This contains all the gender choices">
+        <column name="gen_ID" phpName="Id" type="SMALLINT" size="1" sqlType="tinyinit(1) unsigned" primaryKey="true"
+                autoIncrement="true" required="true"/>
+        <column name="gen_Name" phpName="Name" type="VARCHAR" size="30"/>
+        <column name="gen_Description" phpName="Description" type="VARCHAR" size="50"/>
 
+        <index name="gen_ID">
+            <index-column name="gen_ID"/>
+        </index>
+        <vendor type="mysql">
+            <parameter name="Engine" value="InnoDB"/>
+        </vendor>
+        <behavior name="validate">
+            <parameter name="rule1" value="{column: gen_Name, validator: NotNull}" />
+            <parameter name="rule2" value="{column: gen_Name, validator: Length, options: {max: 30}}" />
+            <parameter name="rule3" value="{column: gen_Description, validator: NotNull}" />
+            <parameter name="rule4" value="{column: gen_Description, validator: Length, options: {max: 50}}" />
+        </behavior>
+    </table>
     <!--
  <table name="istlookup_lu" idMethod="native" phpName="IstlookupLu" >
    <column name="lu_fam_ID" phpName="LuFamId" type="SMALLINT" size="9" primaryKey="true" required="true" defaultValue="0"/>
