@@ -6,6 +6,7 @@
  * 
  * Updated by Troy Smith, 2019-07-13
  */
+
 require 'Include/Config.php';
 require 'Include/Functions.php';
 use ChurchCRM\dto\SystemConfig;
@@ -16,6 +17,7 @@ use ChurchCRM\ListOptionQuery;
 use ChurchCRM\SessionUser;
 use ChurchCRM\GenderTypeQuery;
 use Propel\Runtime\Propel;
+
 // Set the page title
 $sPageTitle = gettext('People Dashboard');
 require 'Include/Header.php';
@@ -26,6 +28,7 @@ $familyCount = $dashboardService->getFamilyCount();
 $groupStats = $dashboardService->getGroupStats();
 $ageStats = $dashboardService->getAgeStats();
 $demographicStats = ListOptionQuery::create()->filterByID('2')->find();
+
 $classList = ListOptionQuery::create()->filterByID(1)->find();
 foreach ($classList as $list) {
   $classifications[$list->getOptionName()] = $list->getOptionID();
@@ -329,6 +332,7 @@ foreach($rsEmailList as $email) {
                   } 
                 }
             }
+
               // find Unknown family role
               unset($countGender);
               foreach ($genderlist as $gender) {
@@ -397,6 +401,7 @@ foreach($rsEmailList as $email) {
         var PieData = [
             <?php
             $RoleChild = SystemConfig::getValue('sDirRoleChild');
+
               // get list of children
               $personList = PersonQuery::create()->leftJoinFamily()->where("family_fam.fam_DateDeactivated is NULL")
                 ->withColumn("COUNT(per_ID)", "Numb")
@@ -410,6 +415,7 @@ foreach($rsEmailList as $email) {
               foreach($personList as $person) {
                 echo "{value: " . $person->getNumb() . ", label: 'Child - " . gettext($person->getGenderName()) . "' },";
               }
+
               // get list of adults
               $personList = PersonQuery::create()->leftJoinFamily()->where("family_fam.fam_DateDeactivated is NULL")
                 ->withColumn("COUNT(per_ID)", "Numb")
@@ -419,6 +425,7 @@ foreach($rsEmailList as $email) {
                 ->orderByGender()
                 ->orderByFmrId()
                 ->find();
+
               foreach($personList as $person) {
                 echo "{value: " . $person->getNumb() . ", label: 'Adult - " . gettext($person->getGenderName()) . "' },";
               }
